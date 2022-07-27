@@ -123,7 +123,7 @@ def bet_validation(player):
 
 
 def main():
-    name = "Ovuvuevuevue Enyetuenwuevue Ugbemugbem Osas"  # input("Enter you name please: ")
+    name = input("Enter you name please: ")  # "Ovuvuevuevue Enyetuenwuevue Ugbemugbem Osas"
 
     deck = Deck()
     deck.shuffle()
