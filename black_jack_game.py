@@ -70,7 +70,7 @@ class Hand:
         elif self.hand_sum() > 21:
             bust = "BUST!"
 
-        return f"{str_cards[:len(str_cards) - 2]} |value {self.hand_sum()} {bj}{bust}"
+        return f"{str_cards[:len(str_cards) - 2]} |value {self.hand_sum()} {bj}{bust}"  # -2 to remove ", " at the end
 
 
 class Player:
