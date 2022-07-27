@@ -53,8 +53,9 @@ class Hand:
         sum_of_hand = 0
         for card in self.cards:
             sum_of_hand += card.value
-        if sum_of_hand > 21 and "Ace" in self.cards:
-            return sum_of_hand - 10
+        for card in self.cards:
+            if sum_of_hand > 21 and card.rank == "Ace":
+                sum_of_hand -= 10
         return sum_of_hand
 
     def __str__(self):
@@ -67,9 +68,6 @@ class Hand:
             bj = "black jack!"
         elif self.hand_sum() > 21:
             bust = "BUST!"
-
-        if "Ace" in self.cards:
-            return f"{str_cards[:len(str_cards) - 2]} |value {self.hand_sum()}/{self.hand_sum() - 10} {bj}"
 
         return f"{str_cards[:len(str_cards) - 2]} |value {self.hand_sum()} {bj}{bust}"
 
@@ -122,22 +120,38 @@ def bet_validation(player):
             continue
 
 
+def action_validation(player, bet):
+    if bet * 2 <= player.bank and len(player.hand.cards) == 2:
+        ch = input("Do you want hit or stand or double down? (h/s/d): ")
+        while ch != 'h' and ch != 's' and ch != 'd':
+            print("please try again h for hit , s for stand , d for double down")
+            ch = input("please enter your action : ")
+        return ch
+
+    ch = input("Do you want hit or stand ? (h/s): ")
+    while ch != 'h' and ch != 's':
+        print("please try again h for hit , s for stand")
+        ch = input("please enter your action : ")
+    return ch
+
+
 def main():
     name = input("Enter you name please: ")  # "Ovuvuevuevue Enyetuenwuevue Ugbemugbem Osas"
-
     deck = Deck()
     deck.shuffle()
     dealer = Hand()
     player = Player(name, 1000)
+    highest_bank = 1000
     print(f"Welcome to the black jack game {name} good luck!!!")
     iteration = 0
     while True:
         playing = not lose_check(player)
         if not playing:
-            print("Game Over")
+            print("Game Over bank value = 0 ")
+            print(f"highest bank value = {highest_bank}$")
             break
 
-        print(f"bank: {player.bank}")
+        print(f"bank: {player.bank}$")
         if iteration > 0:
             time.sleep(2)
             clear()
@@ -152,11 +166,27 @@ def main():
         player.add_cards(deck.deal_one())
         while playing:
             print(f"dealer hand: {dealer}")
-            print(f"player hand: {player.hand}")
-            action = input("Do you want hit or stand ? (h/s): ")  # TODO validation of input
+            print(f"player hand: {player.hand} bet is {bet}$")
+            if player.hand.hand_sum() != 21:
+                action = action_validation(player, bet)
+            else:
+                action = 's'
+
+            if action == 'd':
+                bet *= 2
+                player.add_cards(deck.deal_one())
+                print(f"player hand: {player.hand} bet is {bet}$")
+                time.sleep(1)
+                if player.hand.hand_sum() > 21:
+                    print("Bust!")
+                    player.lose(bet)
+                    playing = False
+                    break
+                action = 's'
+
             while action == 'h':
                 player.add_cards(deck.deal_one())
-                print(f"player hand: {player.hand}")
+                print(f"player hand: {player.hand} bet is {bet}$")
                 if player.hand.hand_sum() > 21:
                     print("Bust!")
                     player.lose(bet)
@@ -164,7 +194,7 @@ def main():
                     break
                 if player.hand.hand_sum() == 21:
                     break
-                action = input("Do you want hit or stand ? (h/s): ")
+                action = action_validation(player, bet)
 
             if action == 's' or player.hand.hand_sum() == 21:
                 print(f"dealer hand: {dealer}")
@@ -175,12 +205,14 @@ def main():
                         print(f"dealer hand: {dealer}")
                         time.sleep(1)
                         if dealer.hand_sum() > 21:  # win
-                            print(f"congratulations {name} you win {bet}")
+                            print(f"congratulations {name} you win {bet}$")
                             player.win(bet)
+                            if player.bank > highest_bank:
+                                highest_bank = player.bank
                             playing = False
                             break
                     elif dealer.hand_sum() > player.hand.hand_sum():  # Lose
-                        print(f" {name} you lost {bet}")
+                        print(f"{name} you lost {bet}$")
                         player.lose(bet)
                         playing = False
                         break
@@ -194,5 +226,4 @@ if __name__ == "__main__":
     main()
 
     # TO DO summery
-    # TODO add the highest bank print after lose
-    # TODO add "double down" and "split" moves
+    # TODO add "split" move
