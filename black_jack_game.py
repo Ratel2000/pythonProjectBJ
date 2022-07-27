@@ -34,7 +34,7 @@ class Deck:
 
     def deal_one(self):
         # remove one card from the list of all_cards
-        return self.all_cards.pop()
+        return self.all_cards.pop(0)
 
 
 def clear_hands(deck, dealer, player):
@@ -53,6 +53,8 @@ class Hand:
         sum_of_hand = 0
         for card in self.cards:
             sum_of_hand += card.value
+        if sum_of_hand > 21 and "Ace" in self.cards:
+            return sum_of_hand - 10
         return sum_of_hand
 
     def __str__(self):
@@ -60,9 +62,16 @@ class Hand:
         for card in self.cards:
             str_cards += f"{card}, "
         bj = ""
+        bust = ""
         if self.hand_sum() == 21:
             bj = "black jack!"
-        return f"{str_cards[:len(str_cards) - 2]} |value {self.hand_sum()} {bj}"
+        elif self.hand_sum() > 21:
+            bust = "BUST!"
+
+        if "Ace" in self.cards:
+            return f"{str_cards[:len(str_cards) - 2]} |value {self.hand_sum()}/{self.hand_sum() - 10} {bj}"
+
+        return f"{str_cards[:len(str_cards) - 2]} |value {self.hand_sum()} {bj}{bust}"
 
 
 class Player:
@@ -96,7 +105,21 @@ def lose_check(player):
 
 
 def clear():
-    print("\n" * 50)
+    print("\n" * 10)
+
+
+def bet_validation(player):
+    while True:
+        try:
+            bet_input = int(input("please enter your bet : "))
+            while bet_input > player.bank:
+                print("you have not enough chips for bet please try again ")
+                bet_input = input("please enter your bet : ")
+            if bet_input <= player.bank:
+                return bet_input
+        except (TypeError, ValueError):
+            print("please input your bet as number")
+            continue
 
 
 def main():
@@ -116,19 +139,21 @@ def main():
 
         print(f"bank: {player.bank}")
         if iteration > 0:
-            time.sleep(5)
+            time.sleep(2)
             clear()
+        if iteration > 100:
+            deck.shuffle()
+            iteration -= 99
         iteration += 1
-        bet = input("please enter your bet : ")  # TO DO add bet validation
-        # dealer.cards.append(deck.deal_one())
+        bet = bet_validation(player)
         clear_hands(deck, dealer, player)
-        dealer.cards.append(deck.deal_one())
+        dealer.cards.extend([deck.deal_one()])
         player.add_cards(deck.deal_one())
         player.add_cards(deck.deal_one())
         while playing:
             print(f"dealer hand: {dealer}")
             print(f"player hand: {player.hand}")
-            action = input("Do you want hit or stand ? (h/s)")
+            action = input("Do you want hit or stand ? (h/s): ")  # TODO validation of input
             while action == 'h':
                 player.add_cards(deck.deal_one())
                 print(f"player hand: {player.hand}")
@@ -137,10 +162,11 @@ def main():
                     player.lose(bet)
                     playing = False
                     break
-                action = input("Do you want hit or stand ? (h/s)")
+                if player.hand.hand_sum() == 21:
+                    break
+                action = input("Do you want hit or stand ? (h/s): ")
 
-            if action == 's':
-                print(f"player hand: {player.hand}")
+            if action == 's' or player.hand.hand_sum() == 21:
                 print(f"dealer hand: {dealer}")
                 time.sleep(1)
                 while dealer.hand_sum() <= 21:
@@ -167,4 +193,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # strange bug with __str__()
+    # TO DO summery
+    # TODO add the highest bank print after lose
+    # TODO add "double down" and "split" moves
